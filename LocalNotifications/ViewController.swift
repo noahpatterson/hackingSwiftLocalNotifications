@@ -9,8 +9,9 @@
 import UIKit
 import UserNotifications
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UNUserNotificationCenterDelegate {
 
+    @IBOutlet weak var userInfoLabel: UILabel!
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -23,6 +24,26 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        if let customData = userInfo["customData"] as? String {
+            var text = ""
+            switch response.actionIdentifier {
+            case UNNotificationDefaultActionIdentifier:
+                text += "Swiped notification "
+            case "show":
+                text += "Clicked Show "
+                break
+            default:
+                break
+            }
+            
+            userInfoLabel.text = text + customData
+            userInfoLabel.isHidden = false
+        }
+        // you mush call the completionHandler when done
+        completionHandler()
+    }
 
     func registerLocal() {
         let center = UNUserNotificationCenter.current()
@@ -38,6 +59,7 @@ class ViewController: UIViewController {
     }
     
     func scheduleLocal() {
+        registerCategories()
         let center = UNUserNotificationCenter.current()
         
         let content = UNMutableNotificationContent()
@@ -56,6 +78,15 @@ class ViewController: UIViewController {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         
         center.add(request)
+    }
+    
+    func registerCategories() {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        
+        let show = UNNotificationAction(identifier: "show", title: "tell me more...", options: .foreground)
+        let category = UNNotificationCategory(identifier: "alarm", actions: [show], intentIdentifiers: [], options: [])
+        center.setNotificationCategories([category])
     }
 }
 
